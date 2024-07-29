@@ -1,8 +1,14 @@
+using Microsoft.EntityFrameworkCore;
+using ProgettoBackendU2W3.Context;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddDbContext<DataContext>( 
+    opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer")))
+    ;
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

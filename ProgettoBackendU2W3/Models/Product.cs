@@ -13,7 +13,7 @@ namespace ProgettoBackendU2W3.Models
         [Range(0, 100)]
         public decimal Price { get; set; }
         [Required, StringLength(128)]
-        public required string Photo { get; set; }
+        public required byte Photo { get; set; }
         [Range(0, 60)]
         public int DeliveryTimeInMinutes { get; set; }
         public List<Ingredient> Ingredients { get; set; } = [];
