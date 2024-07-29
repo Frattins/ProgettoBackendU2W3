@@ -1,0 +1,23 @@
+﻿@model LoginModel
+
+<div class="text-center"><h1>Login</h1></div>
+<div class="row">
+    <form asp-action="Login" asp-route-returnUrl="@TempData["ReturnUrl"]">
+        @Html.AntiForgeryToken()
+        <div class="offset-3 col-6">
+            <div class="input-group">
+                <label asp-for="Email" class="col-3 form-label"></label>
+                <input asp-for="Email" class="form-control ms-1" />
+                <span asp-validation-for="Email"></span>
+            </div>
+            <div class="input-group mt-1">
+                <label asp-for="Password" class="col-3 form-label"></label>
+                <input asp-for="Password" class="form-control ms-1" />
+                <span asp-validation-for="Email"></span>
+            </div>
+            <div class="input-group justify-content-center mt-2">
+                <button class="btn btn-success">Accedi</button>
+            </div>
+        </div>
+    </form>
+</div>
