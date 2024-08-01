@@ -4,16 +4,18 @@ using Microsoft.EntityFrameworkCore;
 using ProgettoBackendU2W3.Data;
 using ProgettoBackendU2W3.Models;
 using ProgettoBackendU2W3.ViewModels;
+using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace ProgettoBackendU2W3.Controllers
 {
     [Authorize]
-    public class OrderController : Controller
+    public class OrdersController : Controller
     {
         private readonly ApplicationDbContext _context;
 
-        public OrderController(ApplicationDbContext context)
+        public OrdersController(ApplicationDbContext context)
         {
             _context = context;
         }
@@ -32,23 +34,23 @@ namespace ProgettoBackendU2W3.Controllers
                 return RedirectToAction("Index", "Products");
             }
 
-            var model = new CheckoutViewModel
+            var orderViewModel = new OrderViewModel
             {
-                Items = cart.Items.Select(i => new CheckoutItemViewModel
+                Items = cart.Items.Select(i => new OrderItemViewModel
                 {
                     ProductId = i.ProductId,
-                    Name = i.Product.Name,
+                    ProductName = i.Product.Name,
                     Quantity = i.Quantity,
-                    Price = i.Price
-                }).ToList(),
-                TotalPrice = cart.TotalPrice
+                    Price = i.Product.Price
+                }).ToList()
             };
 
-            return View(model);
+            return View(orderViewModel);
         }
 
         [HttpPost]
-        public async Task<IActionResult> ConfirmOrder(CheckoutViewModel model)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Checkout(OrderViewModel model)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var cart = await _context.Carts
@@ -61,29 +63,43 @@ namespace ProgettoBackendU2W3.Controllers
                 return RedirectToAction("Index", "Products");
             }
 
-            var order = new Order
+            if (ModelState.IsValid)
             {
-                UserId = userId,
-                OrderDate = DateTime.Now,
-                ShippingAddress = model.ShippingAddress,
-                Notes = model.Notes,
-                IsCompleted = false,
-                TotalCost = cart.TotalPrice,
-                OrderItems = cart.Items.Select(i => new OrderItem
+                var order = new Order
                 {
-                    ProductId = i.ProductId,
-                    Quantity = i.Quantity,
-                    Price = i.Price
-                }).ToList()
-            };
+                    UserId = userId,
+                    ShippingAddress = model.ShippingAddress,
+                    Notes = model.Notes,
+                    OrderDate = DateTime.Now,
+                    IsCompleted = false,
+                    TotalCost = cart.TotalPrice,
+                    OrderItems = cart.Items.Select(i => new OrderItem
+                    {
+                        ProductId = i.ProductId,
+                        Quantity = i.Quantity,
+                        Price = i.Product.Price
+                    }).ToList()
+                };
 
-            _context.Orders.Add(order);
-            _context.Carts.Remove(cart);
-            await _context.SaveChangesAsync();
+                _context.Orders.Add(order);
+                _context.Carts.Remove(cart);
+                await _context.SaveChangesAsync();
 
-            return RedirectToAction("OrderConfirmation", new { orderId = order.Id });
+                return RedirectToAction("OrderConfirmation", new { orderId = order.Id });
+            }
+
+            model.Items = cart.Items.Select(i => new OrderItemViewModel
+            {
+                ProductId = i.ProductId,
+                ProductName = i.Product.Name,
+                Quantity = i.Quantity,
+                Price = i.Product.Price
+            }).ToList();
+
+            return View(model);
         }
 
+        [HttpGet]
         public async Task<IActionResult> OrderConfirmation(int orderId)
         {
             var order = await _context.Orders
@@ -93,10 +109,11 @@ namespace ProgettoBackendU2W3.Controllers
 
             if (order == null)
             {
-                return RedirectToAction("Index", "Products");
+                return NotFound();
             }
 
             return View(order);
         }
+
     }
 }

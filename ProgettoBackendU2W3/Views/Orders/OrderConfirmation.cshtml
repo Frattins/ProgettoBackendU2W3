@@ -5,9 +5,8 @@
 }
 
 <h2>Conferma Ordine</h2>
-
 <p>Grazie per il tuo ordine!</p>
-<p>Il tuo ordine è stato confermato con successo. Dettagli dell'ordine:</p>
+<p>Il tuo ordine è stato confermato con successo.</p>
 
 <p><strong>Indirizzo di Spedizione:</strong> @Model.ShippingAddress</p>
 <p><strong>Note:</strong> @Model.Notes</p>
@@ -32,4 +31,6 @@
         }
     </tbody>
 </table>
-<p>Totale: @Model.TotalPrice €</p>
+<p><strong>Totale:</strong> @Model.TotalCost €</p>
+
+<a asp-action="Index" asp-controller="Home" class="btn btn-primary">Torna alla Home</a>

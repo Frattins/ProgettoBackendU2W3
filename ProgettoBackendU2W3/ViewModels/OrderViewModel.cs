@@ -8,22 +8,16 @@ namespace ProgettoBackendU2W3.ViewModels
         public List<OrderItemViewModel> Items { get; set; } = new List<OrderItemViewModel>();
 
         [Required]
-        [Display(Name = "Indirizzo di spedizione")]
         public string ShippingAddress { get; set; }
 
-        [Display(Name = "Note per la pizzeria")]
         public string Notes { get; set; }
 
-        public decimal TotalCost => CalculateTotalCost();
-
-        private decimal CalculateTotalCost()
+        public decimal TotalCost
         {
-            decimal total = 0;
-            foreach (var item in Items)
+            get
             {
-                total += item.Quantity * item.Price;
+                return Items?.Sum(i => i.Price * i.Quantity) ?? 0;
             }
-            return total;
         }
     }
 
@@ -31,7 +25,7 @@ namespace ProgettoBackendU2W3.ViewModels
     {
         public int ProductId { get; set; }
         public string ProductName { get; set; }
-        public decimal Price { get; set; }
         public int Quantity { get; set; }
+        public decimal Price { get; set; }
     }
 }

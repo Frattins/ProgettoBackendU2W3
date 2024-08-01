@@ -6,7 +6,7 @@
 
 <h2>Checkout</h2>
 
-<form asp-action="CreateOrder" method="post">
+<form asp-action="Checkout" method="post">
     <div class="form-group">
         <label asp-for="ShippingAddress"></label>
         <input asp-for="ShippingAddress" class="form-control" />
@@ -17,5 +17,26 @@
         <textarea asp-for="Notes" class="form-control"></textarea>
         <span asp-validation-for="Notes" class="text-danger"></span>
     </div>
+    <h3>Articoli nell'ordine</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Prodotto</th>
+                <th>Quantità</th>
+                <th>Prezzo</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@item.ProductName</td>
+                    <td>@item.Quantity</td>
+                    <td>@item.Price €</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <p>Totale: @Model.TotalCost €</p>
     <button type="submit" class="btn btn-primary">Concludi Ordine</button>
 </form>
