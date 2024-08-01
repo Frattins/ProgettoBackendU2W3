@@ -64,9 +64,14 @@ app.MapControllerRoute(
 
 app.MapRazorPages();
 
-
 app.Run();
 
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllerRoute(
+        name: "default",
+        pattern: "{controller=Home}/{action=Index}/{id?}");
+});
 // Creazione dei ruoli e dell'utente admin
 using (var scope = app.Services.CreateScope())
 {

@@ -38,7 +38,7 @@ namespace ProgettoBackendU2W3.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Add(int productId)
+        public async Task<IActionResult> Add(int productId, string returnUrl = null)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var cart = await _context.Carts
@@ -51,10 +51,15 @@ namespace ProgettoBackendU2W3.Controllers
                 _context.Carts.Add(cart);
             }
 
+            var product = await _context.Products.FindAsync(productId);
+            if (product == null)
+            {
+                return NotFound("Prodotto non trovato");
+            }
+
             var cartItem = cart.Items.FirstOrDefault(i => i.ProductId == productId);
             if (cartItem == null)
             {
-                var product = await _context.Products.FindAsync(productId);
                 cartItem = new CartItem { ProductId = productId, Quantity = 1, Price = product.Price };
                 cart.Items.Add(cartItem);
             }
@@ -63,8 +68,20 @@ namespace ProgettoBackendU2W3.Controllers
                 cartItem.Quantity++;
             }
 
-            await _context.SaveChangesAsync();
-            return RedirectToAction("Index");
+            try
+            {
+                await _context.SaveChangesAsync();
+                if (!string.IsNullOrEmpty(returnUrl))
+                {
+                    return Redirect(returnUrl);
+                }
+                return RedirectToAction("Index", "Products");
+            }
+            catch (Exception ex)
+            {
+                // Log the exception
+                return RedirectToAction("Index", "Products", new { error = "Errore durante l'aggiunta del prodotto al carrello" });
+            }
         }
 
         [HttpPost]

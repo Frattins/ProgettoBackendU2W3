@@ -18,6 +18,7 @@ namespace ProgettoBackendU2W3.Controllers
             _context = context;
         }
 
+        [HttpGet]
         public async Task<IActionResult> Checkout()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

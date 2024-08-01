@@ -1,65 +1,30 @@
-﻿@model IEnumerable<ProgettoBackendU2W3.Models.Product>
-
-@{
-    ViewData["Title"] = "Prodotti Disponibili";
-}
+﻿@model List<Product>
 
 <h2>Prodotti Disponibili</h2>
-
-<div class="row mb-4">
-    <div class="col text-right">
-        <a href="@Url.Action("Cart", "Products")" class="btn btn-secondary">
-            <i class="fas fa-shopping-cart"></i> Carrello (<span id="cart-count">@ViewBag.CartCount</span>)
-        </a>
-    </div>
-</div>
 
 <div class="row">
     @foreach (var product in Model)
     {
-        <div class="col-md-4">
-            <div class="card mb-4 shadow-sm">
-                <img src="@product.PhotoUrl" class="card-img-top" alt="@product.Name">
+        <div class="col-md-4 mb-4">
+            <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">@product.Name</h5>
                     <p class="card-text">
-                        @foreach (var ingredient in product.ProductIngredients.Select(pi => pi.Ingredient.Name))
+                        @foreach (var ingredient in product.ProductIngredients.Select(pi => pi.Ingredient))
                         {
-                            <span>@ingredient</span>
+                            <span>@ingredient.Name</span>
+
                             <br />
                         }
                     </p>
-                    <p class="card-text"><strong>Prezzo: </strong>@product.Price €</p>
-                    <button class="btn btn-primary" onclick="addToCart(@product.Id)">Aggiungi al Carrello</button>
+                    <p class="card-text">Prezzo: @product.Price.ToString("C")</p>
+                    <form asp-controller="Cart" asp-action="Add" method="post">
+                        <input type="hidden" name="productId" value="@product.Id" />
+                        <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                        <button type="submit" class="btn btn-primary">Aggiungi al Carrello</button>
+                    </form>
                 </div>
             </div>
         </div>
     }
 </div>
-
-@section Scripts {
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        function addToCart(productId) {
-            $.ajax({
-                url: '@Url.Action("AddToCart", "Products")',
-                type: 'POST',
-                data: {
-                    id: productId,
-                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-                },
-                success: function (result) {
-                    if (result.success) {
-                        $("#cart-count").text(result.cartCount);
-                        alert("Prodotto aggiunto al carrello con successo.");
-                    } else {
-                        alert("Errore durante l'aggiunta del prodotto al carrello: " + result.message);
-                    }
-                },
-                error: function (xhr, status, error) {
-                    alert("Errore durante l'aggiunta del prodotto al carrello.");
-                }
-            });
-        }
-    </script>
-}
