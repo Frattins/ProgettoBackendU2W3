@@ -1,38 +1,41 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using ProgettoBackendU2W3.Context;
+using ProgettoBackendU2W3.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Configura la connessione al database
+var connectionString = builder.Configuration.GetConnectionString("Pizzeria");
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+// Configura l'identità
+builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
+
 builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
 
-// stringa di connessione utilizzata (il ! serve a esprimere l'esigenza di esistenza del valore)
-var conn = builder.Configuration.GetConnectionString("SqlServer")!;
-
-// Autenticazione e autorizzazione
-builder.Services
-    .AddAuthentication(opt => {
-        opt.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        opt.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        opt.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    })
-    .AddCookie(opt =>
-        opt.LoginPath = "/Account/Login"
-    )
-    ;
-builder.Services
-    // configurazione della DI per il contesto di persistenza dei dati con SQL Server
-    .AddDbContext<DataContext>(opt => opt.UseSqlServer(conn))
-    ;
+// Aggiungi la configurazione della sessione
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+// Configura la pipeline di richiesta HTTP
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -41,10 +44,53 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
+
+// Usa il middleware della sessione
+app.UseSession();
+
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+app.MapControllerRoute(
+    name: "admin",
+    pattern: "{area:exists}/{controller=Admin}/{action=ManageOrders}/{id?}");
+
+app.MapRazorPages();
+
 app.Run();
+
+// Creazione dei ruoli e dell'utente admin
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+
+    // Creazione del ruolo Admin
+    if (!await roleManager.RoleExistsAsync("Admin"))
+    {
+        await roleManager.CreateAsync(new IdentityRole("Admin"));
+    }
+
+    // Creazione del ruolo User
+    if (!await roleManager.RoleExistsAsync("User"))
+    {
+        await roleManager.CreateAsync(new IdentityRole("User"));
+    }
+
+    // Creazione dell'utente admin
+    var adminEmail = "admin@inforno.com";
+    var adminUser = await userManager.FindByEmailAsync(adminEmail);
+    if (adminUser == null)
+    {
+        adminUser = new IdentityUser { UserName = adminEmail, Email = adminEmail };
+        await userManager.CreateAsync(adminUser, "AdminPassword123!");
+        await userManager.AddToRoleAsync(adminUser, "Admin");
+    }
+}

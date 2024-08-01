@@ -5,13 +5,13 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using ProgettoBackendU2W3.Context;
+using ProgettoBackendU2W3.Data;
 
 #nullable disable
 
 namespace ProgettoBackendU2W3.Migrations
 {
-    [DbContext(typeof(DataContext))]
+    [DbContext(typeof(ApplicationDbContext))]
     [Migration("20240729163318_InizioGestione")]
     partial class InizioGestione
     {

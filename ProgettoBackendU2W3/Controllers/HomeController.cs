@@ -15,6 +15,18 @@ namespace ProgettoBackendU2W3.Controllers
 
         public IActionResult Index()
         {
+            if (User.Identity.IsAuthenticated)
+            {
+                if (User.IsInRole("Admin"))
+                {
+                    return RedirectToAction("Index", "Admin");
+                }
+                else
+                {
+                    return RedirectToAction("Index", "Products");
+                }
+            }
+
             return View();
         }
 

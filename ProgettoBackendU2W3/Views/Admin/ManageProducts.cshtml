@@ -1,0 +1,47 @@
+﻿@model IEnumerable<ProgettoBackendU2W3.Models.Product>
+
+@{
+    ViewData["Title"] = "Gestione Prodotti";
+}
+
+<h2>Gestione Prodotti</h2>
+
+<p>
+    <a asp-action="CreateProduct" class="btn btn-primary">Aggiungi Nuovo Prodotto</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Prezzo</th>
+            <th>Tempo di Consegna</th>
+            <th>Ingredienti</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var product in Model)
+        {
+            <tr>
+                <td>@product.Name</td>
+                <td>@product.Price</td>
+                <td>@product.DeliveryTime minuti</td>
+                <td>
+                    @foreach (var ingredient in product.ProductIngredients.Select(pi => pi.Ingredient.Name))
+                    {
+                        <span>@ingredient</span>
+
+                        <br />
+                    }
+                </td>
+                <td>
+                    <a asp-action="EditProduct" asp-route-id="@product.Id" class="btn btn-warning">Modifica</a>
+                    <form asp-action="DeleteProduct" asp-route-id="@product.Id" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-danger">Elimina</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

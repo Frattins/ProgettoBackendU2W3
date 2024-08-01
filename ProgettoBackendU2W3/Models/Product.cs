@@ -1,21 +1,20 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
-
-namespace ProgettoBackendU2W3.Models
+﻿namespace ProgettoBackendU2W3.Models
 {
     public class Product
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [Required]
-        [StringLength(50)]
-        public required string Name { get; set; }
-        [Range(0, 100)]
+
+
+        public string Name { get; set; }
+
+        public string? PhotoUrl { get; set; }
+
+
         public decimal Price { get; set; }
-        [Required, StringLength(128)]
-        public required byte Photo { get; set; }
-        [Range(0, 60)]
-        public int DeliveryTimeInMinutes { get; set; }
-        public List<Ingredient> Ingredients { get; set; } = [];
+
+
+        public int? DeliveryTime { get; set; } // tempo in minuti
+
+        public List<ProductIngredient>? ProductIngredients { get; set; } = new List<ProductIngredient>();
     }
 }
