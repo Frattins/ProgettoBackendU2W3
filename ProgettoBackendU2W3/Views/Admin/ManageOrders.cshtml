@@ -9,11 +9,10 @@
 <table class="table">
     <thead>
         <tr>
-            <th>ID</th>
+            <th>Id</th>
             <th>Utente</th>
-            <th>Indirizzo di Spedizione</th>
-            <th>Note</th>
             <th>Data Ordine</th>
+            <th>Totale</th>
             <th>Stato</th>
             <th>Azioni</th>
         </tr>
@@ -24,25 +23,15 @@
             <tr>
                 <td>@order.Id</td>
                 <td>@order.UserId</td>
-                <td>@order.ShippingAddress</td>
-                <td>@order.Notes</td>
-                <td>@order.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
-                <td>
-                    @if (order.IsCompleted)
-                    {
-                        <span class="badge badge-success">Completato</span>
-                    }
-                    else
-                    {
-                        <span class="badge badge-warning">In sospeso</span>
-                    }
-                </td>
+                <td>@order.OrderDate.ToShortDateString()</td>
+                <td>@order.TotalCost €</td>
+                <td>@(order.IsCompleted ? "Evaso" : "In attesa")</td>
                 <td>
                     @if (!order.IsCompleted)
                     {
-                        <form asp-action="UpdateOrderStatus" method="post" style="display:inline;">
+                        <form asp-action="MarkAsCompleted" method="post">
                             <input type="hidden" name="id" value="@order.Id" />
-                            <button type="submit" class="btn btn-success">Segna come completato</button>
+                            <button type="submit" class="btn btn-success">Segna come Evaso</button>
                         </form>
                     }
                 </td>

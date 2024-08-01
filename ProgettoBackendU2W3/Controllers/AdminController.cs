@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProgettoBackendU2W3.Data;
 using ProgettoBackendU2W3.Models;
+using ProgettoBackendU2W3.ViewModels;
 
 namespace ProgettoBackendU2W3.Controllers
 {
@@ -176,5 +177,36 @@ namespace ProgettoBackendU2W3.Controllers
 
             return RedirectToAction(nameof(ManageOrders));
         }
+    
+
+
+    [HttpPost]
+    public async Task<IActionResult> MarkAsCompleted(int id)
+    {
+        var order = await _context.Orders.FindAsync(id);
+        if (order != null)
+        {
+            order.IsCompleted = true;
+            _context.Update(order);
+            await _context.SaveChangesAsync();
+        }
+        return RedirectToAction(nameof(ManageOrders));
     }
+
+    public async Task<IActionResult> DailyStats()
+    {
+        var today = DateTime.Today;
+        var orders = await _context.Orders.Where(o => o.OrderDate.Date == today && o.IsCompleted).ToListAsync();
+        var totalOrders = orders.Count;
+        var totalRevenue = orders.Sum(o => o.TotalCost);
+
+        var stats = new DailyStatsViewModel
+        {
+            TotalOrders = totalOrders,
+            TotalRevenue = totalRevenue
+        };
+
+        return View(stats);
+    }
+}
 }
