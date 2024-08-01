@@ -5,7 +5,7 @@ using ProgettoBackendU2W3.Data;
 var builder = WebApplication.CreateBuilder(args);
 
 // Configura la connessione al database
-var connectionString = builder.Configuration.GetConnectionString("Pizzeria");
+var connectionString = builder.Configuration.GetConnectionString("InForno");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
@@ -51,18 +51,19 @@ app.UseAuthorization();
 app.UseSession();
 
 app.MapControllerRoute(
-    name: "areas",
-    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
-
-app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
-    name: "admin",
-    pattern: "{area:exists}/{controller=Admin}/{action=ManageOrders}/{id?}");
+    name: "cart",
+    pattern: "{controller=Cart}/{action=Index}/{id?}");
+
+app.MapControllerRoute(
+    name: "orders",
+    pattern: "{controller=Orders}/{action=Checkout}/{id?}");
 
 app.MapRazorPages();
+
 
 app.Run();
 
@@ -84,13 +85,24 @@ using (var scope = app.Services.CreateScope())
         await roleManager.CreateAsync(new IdentityRole("User"));
     }
 
-    // Creazione dell'utente admin
-    var adminEmail = "admin@inforno.com";
+    // Creazione dell'utente admin predefinito
+    var adminEmail = "davide.frattini@inforno.it";
     var adminUser = await userManager.FindByEmailAsync(adminEmail);
     if (adminUser == null)
     {
         adminUser = new IdentityUser { UserName = adminEmail, Email = adminEmail };
-        await userManager.CreateAsync(adminUser, "AdminPassword123!");
-        await userManager.AddToRoleAsync(adminUser, "Admin");
+        var result = await userManager.CreateAsync(adminUser, "PasswordAdmin1!");
+        if (result.Succeeded)
+        {
+            await userManager.AddToRoleAsync(adminUser, "Admin");
+        }
+        else
+        {
+            // Log degli errori
+            foreach (var error in result.Errors)
+            {
+                Console.WriteLine($"Error creating admin user: {error.Description}");
+            }
+        }
     }
 }

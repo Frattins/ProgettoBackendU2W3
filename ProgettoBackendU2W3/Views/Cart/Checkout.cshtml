@@ -1,0 +1,36 @@
+﻿@model ProgettoBackendU2W3.ViewModels.CartViewModel
+
+@{
+    ViewData["Title"] = "Checkout";
+}
+
+<h2>Checkout</h2>
+
+@if (!Model.Items.Any())
+{
+    <p>Il carrello è vuoto.</p>
+}
+else
+{
+    <form asp-action="ConfirmOrder" method="post">
+        <div class="form-group">
+            <label for="ShippingAddress">Indirizzo di spedizione</label>
+            <input type="text" name="ShippingAddress" class="form-control" required />
+        </div>
+        <div class="form-group">
+            <label for="Notes">Note</label>
+            <textarea name="Notes" class="form-control"></textarea>
+        </div>
+
+        <h3>Riepilogo Ordine</h3>
+        <ul>
+            @foreach (var item in Model.Items)
+            {
+                <li>@item.Product.Name - @item.Quantity x @item.Price €</li>
+            }
+        </ul>
+        <p><strong>Totale:</strong> @Model.TotalPrice €</p>
+
+        <button type="submit" class="btn btn-primary">Concludi Ordine</button>
+    </form>
+}

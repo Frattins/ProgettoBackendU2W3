@@ -1,0 +1,35 @@
+﻿@model ProgettoBackendU2W3.Models.Order
+
+@{
+    ViewData["Title"] = "Conferma Ordine";
+}
+
+<h2>Conferma Ordine</h2>
+
+<p>Grazie per il tuo ordine!</p>
+<p>Il tuo ordine è stato confermato con successo. Dettagli dell'ordine:</p>
+
+<p><strong>Indirizzo di Spedizione:</strong> @Model.ShippingAddress</p>
+<p><strong>Note:</strong> @Model.Notes</p>
+
+<h3>Riepilogo Ordine</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Prodotto</th>
+            <th>Quantità</th>
+            <th>Prezzo</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.OrderItems)
+        {
+            <tr>
+                <td>@item.Product.Name</td>
+                <td>@item.Quantity</td>
+                <td>@item.Price €</td>
+            </tr>
+        }
+    </tbody>
+</table>
+<p>Totale: @Model.TotalPrice €</p>

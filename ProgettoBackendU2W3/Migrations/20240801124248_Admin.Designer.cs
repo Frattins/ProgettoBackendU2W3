@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProgettoBackendU2W3.Data;
 
@@ -11,9 +12,11 @@ using ProgettoBackendU2W3.Data;
 namespace ProgettoBackendU2W3.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20240801124248_Admin")]
+    partial class Admin
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,35 +24,6 @@ namespace ProgettoBackendU2W3.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("CartItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CartId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CartId");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("CartItems");
-                });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
@@ -249,23 +223,6 @@ namespace ProgettoBackendU2W3.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("ProgettoBackendU2W3.Models.Cart", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Carts");
-                });
-
             modelBuilder.Entity("ProgettoBackendU2W3.Models.Ingredient", b =>
                 {
                     b.Property<int>("Id")
@@ -286,57 +243,77 @@ namespace ProgettoBackendU2W3.Migrations
                         new
                         {
                             Id = 1,
-                            Name = "Mozzarella di Bufala"
+                            Name = "Mozzarella"
                         },
                         new
                         {
                             Id = 2,
-                            Name = "Pomodorini"
+                            Name = "Pomodoro"
                         },
                         new
                         {
                             Id = 3,
-                            Name = "Rucola"
+                            Name = "Basilico"
                         },
                         new
                         {
                             Id = 4,
-                            Name = "Olio al tartufo"
+                            Name = "Olio d'oliva"
                         },
                         new
                         {
                             Id = 5,
-                            Name = "Grana Padano"
+                            Name = "Sale"
                         },
                         new
                         {
                             Id = 6,
-                            Name = "Pesto"
+                            Name = "Pepe"
                         },
                         new
                         {
                             Id = 7,
-                            Name = "Salame Piccante"
+                            Name = "Aglio"
                         },
                         new
                         {
                             Id = 8,
-                            Name = "Bresaola"
+                            Name = "Origano"
                         },
                         new
                         {
                             Id = 9,
-                            Name = "Gorgonzola"
+                            Name = "Prosciutto"
                         },
                         new
                         {
                             Id = 10,
-                            Name = "Prosciutto Cotto"
+                            Name = "Funghi"
                         },
                         new
                         {
                             Id = 11,
-                            Name = "Zucchine"
+                            Name = "Cipolla"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Name = "Peperoni"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Name = "Carciofi"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Name = "Acciughe"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Name = "Salsiccia"
                         });
                 });
 
@@ -362,9 +339,6 @@ namespace ProgettoBackendU2W3.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal>("TotalCost")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -384,9 +358,6 @@ namespace ProgettoBackendU2W3.Migrations
 
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
@@ -433,21 +404,16 @@ namespace ProgettoBackendU2W3.Migrations
                         {
                             Id = 1,
                             DeliveryTime = 20,
-                            Name = "Pizza Margherita DOP",
+                            Name = "Pizza Margherita",
+                            PhotoUrl = "/images/margherita.jpg",
                             Price = 5.00m
                         },
                         new
                         {
                             Id = 2,
                             DeliveryTime = 25,
-                            Name = "Pizza Diavola",
-                            Price = 7.50m
-                        },
-                        new
-                        {
-                            Id = 3,
-                            DeliveryTime = 25,
-                            Name = "Pizza Boscaiola",
+                            Name = "Pizza Prosciutto e Funghi",
+                            PhotoUrl = "/images/prosciutto_funghi.jpg",
                             Price = 7.50m
                         });
                 });
@@ -479,48 +445,29 @@ namespace ProgettoBackendU2W3.Migrations
                         },
                         new
                         {
+                            ProductId = 1,
+                            IngredientId = 3
+                        },
+                        new
+                        {
                             ProductId = 2,
                             IngredientId = 1
                         },
                         new
                         {
                             ProductId = 2,
-                            IngredientId = 7
+                            IngredientId = 2
                         },
                         new
                         {
-                            ProductId = 3,
-                            IngredientId = 1
+                            ProductId = 2,
+                            IngredientId = 9
                         },
                         new
                         {
-                            ProductId = 3,
+                            ProductId = 2,
                             IngredientId = 10
-                        },
-                        new
-                        {
-                            ProductId = 3,
-                            IngredientId = 11
                         });
-                });
-
-            modelBuilder.Entity("CartItem", b =>
-                {
-                    b.HasOne("ProgettoBackendU2W3.Models.Cart", "Cart")
-                        .WithMany("Items")
-                        .HasForeignKey("CartId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ProgettoBackendU2W3.Models.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Cart");
-
-                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -610,11 +557,6 @@ namespace ProgettoBackendU2W3.Migrations
                     b.Navigation("Ingredient");
 
                     b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("ProgettoBackendU2W3.Models.Cart", b =>
-                {
-                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("ProgettoBackendU2W3.Models.Ingredient", b =>

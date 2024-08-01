@@ -1,0 +1,43 @@
+﻿@model ProgettoBackendU2W3.Models.Cart
+
+@{
+    ViewData["Title"] = "Carrello";
+}
+
+<h2>Carrello</h2>
+
+@if (!Model.Items.Any())
+{
+    <p>Il carrello è vuoto.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Prodotto</th>
+                <th>Quantità</th>
+                <th>Prezzo</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@item.Product.Name</td>
+                    <td>@item.Quantity</td>
+                    <td>@item.Price €</td>
+                    <td>
+                        <form asp-action="Remove" asp-controller="Cart" method="post">
+                            <input type="hidden" name="productId" value="@item.ProductId" />
+                            <button type="submit" class="btn btn-danger">Rimuovi</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <p>Totale: @Model.TotalPrice €</p>
+    <a asp-action="Checkout" asp-controller="Orders" class="btn btn-primary">Procedi al Checkout</a>
+}

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using ProgettoBackendU2W3.ViewModels;
+using System.Threading.Tasks;
 
 namespace ProgettoBackendU2W3.Controllers
 {
@@ -50,6 +51,7 @@ namespace ProgettoBackendU2W3.Controllers
             return View(model);
         }
 
+
         [HttpGet]
         public IActionResult Register()
         {
@@ -66,8 +68,9 @@ namespace ProgettoBackendU2W3.Controllers
                 var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    // Assegna il ruolo "User" al nuovo utente
-                    await _userManager.AddToRoleAsync(user, "User");
+                    // Assegna il ruolo "User" o "Admin" al nuovo utente
+                    var role = model.IsAdmin ? "Admin" : "User";
+                    await _userManager.AddToRoleAsync(user, role);
 
                     await _signInManager.SignInAsync(user, isPersistent: false);
                     return RedirectToAction("Index", "Products");
@@ -98,4 +101,5 @@ namespace ProgettoBackendU2W3.Controllers
             return View(users);
         }
     }
+
 }
