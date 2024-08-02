@@ -46,12 +46,24 @@ namespace ProgettoBackendU2W3.Controllers
         {
             if (ModelState.IsValid)
             {
+                string uniqueFileName = null;
+                if (model.Photo != null)
+                {
+                    string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
+                    uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Photo.FileName;
+                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await model.Photo.CopyToAsync(fileStream);
+                    }
+                }
+
                 var product = new Product
                 {
                     Name = model.Name,
                     Price = model.Price,
                     DeliveryTime = model.DeliveryTime,
-                    PhotoUrl = model.PhotoUrl,
+                    PhotoUrl = uniqueFileName != null ? "/images/" + uniqueFileName : null,
                     ProductIngredients = model.SelectedIngredientIds.Select(id => new ProductIngredient { IngredientId = id }).ToList()
                 };
 
@@ -64,22 +76,63 @@ namespace ProgettoBackendU2W3.Controllers
             return View(model);
         }
 
-        [HttpGet]
-        public IActionResult EditProduct(int id)
-        {
-            var product = _context.Products
-                .Include(p => p.ProductIngredients)
-                .ThenInclude(pi => pi.Ingredient)
-                .FirstOrDefault(p => p.Id == id);
 
-            if (product == null)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditProduct(Product model, int[] selectedIngredientIds, IFormFile newPhoto)
+        {
+            if (ModelState.IsValid)
             {
-                return NotFound();
+                var product = _context.Products
+                    .Include(p => p.ProductIngredients)
+                    .FirstOrDefault(p => p.Id == model.Id);
+
+                if (product == null)
+                {
+                    return NotFound();
+                }
+
+                string uniqueFileName = product.PhotoUrl;
+                if (newPhoto != null)
+                {
+                    if (!string.IsNullOrEmpty(product.PhotoUrl))
+                    {
+                        string oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", product.PhotoUrl.TrimStart('/'));
+                        if (System.IO.File.Exists(oldFilePath))
+                        {
+                            System.IO.File.Delete(oldFilePath);
+                        }
+                    }
+
+                    string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
+                    uniqueFileName = Guid.NewGuid().ToString() + "_" + newPhoto.FileName;
+                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await newPhoto.CopyToAsync(fileStream);
+                    }
+                }
+
+                product.Name = model.Name;
+                product.Price = model.Price;
+                product.DeliveryTime = model.DeliveryTime;
+                product.PhotoUrl = uniqueFileName != null ? "/images/" + uniqueFileName : null;
+
+                product.ProductIngredients.Clear();
+                foreach (var ingredientId in selectedIngredientIds)
+                {
+                    product.ProductIngredients.Add(new ProductIngredient { ProductId = product.Id, IngredientId = ingredientId });
+                }
+
+                _context.Update(product);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
             }
 
-            ViewData["Ingredients"] = new MultiSelectList(_context.Ingredients, "Id", "Name", product.ProductIngredients.Select(pi => pi.IngredientId));
-            return View(product);
+            ViewData["Ingredients"] = new MultiSelectList(_context.Ingredients, "Id", "Name", selectedIngredientIds);
+            return View(model);
         }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]

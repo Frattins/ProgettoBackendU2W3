@@ -13,7 +13,7 @@ namespace ProgettoBackendU2W3.ViewModels
         [Required]
         public int DeliveryTime { get; set; }
 
-        public string PhotoUrl { get; set; }
+        public IFormFile Photo { get; set; }
 
         public List<int> SelectedIngredientIds { get; set; }
     }
