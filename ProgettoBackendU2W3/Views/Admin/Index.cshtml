@@ -1,5 +1,47 @@
-﻿﻿@{
-    ViewData["Title"] = "Admin - Dashboard";
+﻿@model IEnumerable<ProgettoBackendU2W3.Models.Product>
+
+@{
+    ViewData["Title"] = "Gestione Prodotti";
 }
 
-<h2>Accesso effettuato come Amministratore</h2>
+<h2>Gestione Prodotti</h2>
+
+<p>
+    <a asp-action="CreateProduct" class="btn btn-primary">Crea Nuovo Prodotto</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Prezzo</th>
+            <th>Tempo di Consegna</th>
+            <th>Ingredienti</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td>@item.Price €</td>
+                <td>@item.DeliveryTime minuti</td>
+                <td>
+                    @foreach (var ingredient in item.ProductIngredients)
+                    {
+                        <span>@ingredient.Ingredient.Name</span>
+
+                        <br />
+                    }
+                </td>
+                <td>
+                    <a asp-action="EditProduct" asp-route-id="@item.Id" class="btn btn-warning">Modifica</a>
+                    <form asp-action="DeleteProduct" asp-route-id="@item.Id" method="post" style="display:inline-block;">
+                        <button type="submit" class="btn btn-danger">Elimina</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

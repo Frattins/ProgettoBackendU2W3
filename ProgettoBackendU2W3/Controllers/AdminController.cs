@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ProgettoBackendU2W3.Data;
 using ProgettoBackendU2W3.Models;
@@ -19,152 +20,130 @@ namespace ProgettoBackendU2W3.Controllers
 
         public IActionResult Index()
         {
-            return View();
+            var products = _context.Products
+                .Include(p => p.ProductIngredients)
+                .ThenInclude(pi => pi.Ingredient)
+                .ToList();
+
+            if (products == null)
+            {
+                return NotFound("Products not found.");
+            }
+
+            return View(products);
         }
 
-        public IActionResult ManageProducts()
-        {
-            return View(_context.Products.Include(p => p.ProductIngredients).ThenInclude(pi => pi.Ingredient).ToList());
-        }
-
+        [HttpGet]
         public IActionResult CreateProduct()
         {
-            ViewBag.Ingredients = _context.Ingredients.ToList();
+            ViewData["Ingredients"] = new MultiSelectList(_context.Ingredients, "Id", "Name");
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult CreateProduct(Product? product, IFormFile? photo, int[]? selectedIngredients)
+        public async Task<IActionResult> CreateProduct(Product model, int[] selectedIngredientIds)
         {
             if (ModelState.IsValid)
             {
-                if (photo != null && photo.Length > 0)
+                var product = new Product
                 {
-                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", photo.FileName);
-                    using (var stream = new FileStream(filePath, FileMode.Create))
-                    {
-                        photo.CopyTo(stream);
-                    }
-                    product.PhotoUrl = "/images/" + photo.FileName;
-                }
+                    Name = model.Name,
+                    Price = model.Price,
+                    DeliveryTime = model.DeliveryTime,
+                    PhotoUrl = model.PhotoUrl,
+                    ProductIngredients = selectedIngredientIds.Select(id => new ProductIngredient { IngredientId = id }).ToList()
+                };
 
-                _context.Products.Add(product);
-                _context.SaveChanges();
-
-                if (selectedIngredients != null)
-                {
-                    foreach (var ingredientId in selectedIngredients)
-                    {
-                        _context.ProductIngredients.Add(new ProductIngredient
-                        {
-                            ProductId = product.Id,
-                            IngredientId = ingredientId
-                        });
-                    }
-                    _context.SaveChanges();
-                }
-
-                return RedirectToAction(nameof(ManageProducts));
+                _context.Add(product);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
             }
-            ViewBag.Ingredients = _context.Ingredients.ToList();
-            return View(product);
+
+            ViewData["Ingredients"] = new MultiSelectList(_context.Ingredients, "Id", "Name", selectedIngredientIds);
+            return View(model);
         }
 
+        [HttpGet]
         public IActionResult EditProduct(int id)
         {
             var product = _context.Products
                 .Include(p => p.ProductIngredients)
-                .SingleOrDefault(p => p.Id == id);
+                .ThenInclude(pi => pi.Ingredient)
+                .FirstOrDefault(p => p.Id == id);
 
             if (product == null)
             {
                 return NotFound();
             }
 
-            ViewBag.Ingredients = _context.Ingredients.ToList();
+            ViewData["Ingredients"] = new MultiSelectList(_context.Ingredients, "Id", "Name", product.ProductIngredients.Select(pi => pi.IngredientId));
             return View(product);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult EditProduct(int? id, Product? product, IFormFile? photo, int[]? selectedIngredients)
+        public async Task<IActionResult> EditProduct(Product model, int[] selectedIngredientIds)
         {
             if (ModelState.IsValid)
             {
-                var existingProduct = _context.Products
+                var product = _context.Products
                     .Include(p => p.ProductIngredients)
-                    .SingleOrDefault(p => p.Id == id);
+                    .FirstOrDefault(p => p.Id == model.Id);
 
-                if (existingProduct == null)
+                if (product == null)
                 {
                     return NotFound();
                 }
 
-                if (photo != null && photo.Length > 0)
+                product.Name = model.Name;
+                product.Price = model.Price;
+                product.DeliveryTime = model.DeliveryTime;
+                product.PhotoUrl = model.PhotoUrl;
+
+                product.ProductIngredients.Clear();
+                foreach (var ingredientId in selectedIngredientIds)
                 {
-                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", photo.FileName);
-                    using (var stream = new FileStream(filePath, FileMode.Create))
-                    {
-                        photo.CopyTo(stream);
-                    }
-                    existingProduct.PhotoUrl = "/images/" + photo.FileName;
+                    product.ProductIngredients.Add(new ProductIngredient { ProductId = product.Id, IngredientId = ingredientId });
                 }
 
-                existingProduct.Name = product.Name;
-                existingProduct.Price = product.Price;
-                existingProduct.DeliveryTime = product.DeliveryTime;
-
-                _context.ProductIngredients.RemoveRange(existingProduct.ProductIngredients);
-
-                if (selectedIngredients != null)
-                {
-                    foreach (var ingredientId in selectedIngredients)
-                    {
-                        _context.ProductIngredients.Add(new ProductIngredient
-                        {
-                            ProductId = product.Id,
-                            IngredientId = ingredientId
-                        });
-                    }
-                }
-
-                _context.SaveChanges();
-                return RedirectToAction(nameof(ManageProducts));
+                _context.Update(product);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
             }
-            ViewBag.Ingredients = _context.Ingredients.ToList();
-            return View(product);
+
+            ViewData["Ingredients"] = new MultiSelectList(_context.Ingredients, "Id", "Name", selectedIngredientIds);
+            return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult DeleteProduct(int id)
+        public async Task<IActionResult> DeleteProduct(int id)
         {
-            var product = _context.Products
-                .Include(p => p.ProductIngredients)
-                .SingleOrDefault(p => p.Id == id);
-
+            var product = await _context.Products.FindAsync(id);
             if (product == null)
             {
                 return NotFound();
             }
 
             _context.Products.Remove(product);
-            _context.SaveChanges();
-            return RedirectToAction(nameof(ManageProducts));
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
 
-        public async Task<IActionResult> ManageOrders()
+        [HttpGet]
+        public IActionResult ManageOrders()
         {
-            var orders = await _context.Orders
+            var orders = _context.Orders
                 .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Product)
-                .ToListAsync();
+                .ToList();
             return View(orders);
         }
 
         [HttpPost]
-        public async Task<IActionResult> UpdateOrderStatus(int id)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkOrderAsCompleted(int id)
         {
             var order = await _context.Orders.FindAsync(id);
             if (order == null)
@@ -173,40 +152,28 @@ namespace ProgettoBackendU2W3.Controllers
             }
 
             order.IsCompleted = true;
-            await _context.SaveChangesAsync();
-
-            return RedirectToAction(nameof(ManageOrders));
-        }
-    
-
-
-    [HttpPost]
-    public async Task<IActionResult> MarkAsCompleted(int id)
-    {
-        var order = await _context.Orders.FindAsync(id);
-        if (order != null)
-        {
-            order.IsCompleted = true;
             _context.Update(order);
             await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(ManageOrders));
         }
-        return RedirectToAction(nameof(ManageOrders));
-    }
 
-    public async Task<IActionResult> DailyStats()
-    {
-        var today = DateTime.Today;
-        var orders = await _context.Orders.Where(o => o.OrderDate.Date == today && o.IsCompleted).ToListAsync();
-        var totalOrders = orders.Count;
-        var totalRevenue = orders.Sum(o => o.TotalCost);
-
-        var stats = new DailyStatsViewModel
+        [HttpGet]
+        public IActionResult DailyStatistics()
         {
-            TotalOrders = totalOrders,
-            TotalRevenue = totalRevenue
-        };
+            return View();
+        }
 
-        return View(stats);
+        [HttpPost]
+        public IActionResult GetDailyStatistics(DateTime date)
+        {
+            var completedOrders = _context.Orders
+                .Where(o => o.OrderDate.Date == date.Date && o.IsCompleted)
+                .ToList();
+
+            var totalOrders = completedOrders.Count;
+            var totalRevenue = completedOrders.Sum(o => o.TotalPrice);
+
+            return Json(new { totalOrders, totalRevenue });
+        }
     }
-}
 }
