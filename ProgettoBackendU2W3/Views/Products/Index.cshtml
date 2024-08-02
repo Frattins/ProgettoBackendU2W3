@@ -2,27 +2,44 @@
 
 <h2>Prodotti Disponibili</h2>
 
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Message"]
+    </div>
+}
+
 <div class="row">
     @foreach (var product in Model)
     {
         <div class="col-md-4 mb-4">
             <div class="card">
+                @if (!string.IsNullOrEmpty(product.PhotoUrl))
+                {
+                    <img src="@Url.Content(product.PhotoUrl)" class="card-img-top" alt="@product.Name">
+                }
                 <div class="card-body">
                     <h5 class="card-title">@product.Name</h5>
                     <p class="card-text">
                         @foreach (var ingredient in product.ProductIngredients.Select(pi => pi.Ingredient))
                         {
                             <span>@ingredient.Name</span>
-
                             <br />
                         }
                     </p>
                     <p class="card-text">Prezzo: @product.Price.ToString("C")</p>
-                    <form asp-controller="Cart" asp-action="Add" method="post">
-                        <input type="hidden" name="productId" value="@product.Id" />
-                        <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
-                        <button type="submit" class="btn btn-primary">Aggiungi al Carrello</button>
-                    </form>
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <form asp-controller="Products" asp-action="AddToCart" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@product.Id" />
+                            <button type="submit" class="btn btn-primary">Aggiungi al Carrello</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <a asp-area="Identity" asp-page="/Account/Login" asp-route-returnUrl="@Url.Action("Index", "Products", new { area = "" })" class="btn btn-primary">Accedi per aggiungere al carrello</a>
+                    }
                 </div>
             </div>
         </div>

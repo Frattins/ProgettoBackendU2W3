@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProgettoBackendU2W3.Data;
 using ProgettoBackendU2W3.Models;
+using System.Security.Claims;
 using System.Text.Json;
 
 public class ProductsController : Controller
@@ -30,29 +31,42 @@ public class ProductsController : Controller
     }
 
     [HttpPost]
-    [Authorize(Roles = "User")]
+    [Authorize]
     [ValidateAntiForgeryToken]
-    public IActionResult AddToCart(int id)
+    public async Task<IActionResult> AddToCart(int id)
     {
-        var product = _context.Products.SingleOrDefault(p => p.Id == id);
+        var product = await _context.Products.FindAsync(id);
         if (product == null)
         {
-            return Json(new { success = false, message = "Prodotto non trovato." });
+            return NotFound();
         }
 
-        var cart = GetCart();
-        if (cart.ContainsKey(id))
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var cart = await _context.Carts
+            .Include(c => c.Items)
+            .FirstOrDefaultAsync(c => c.UserId == userId);
+
+        if (cart == null)
         {
-            cart[id]++;
+            cart = new Cart { UserId = userId };
+            _context.Carts.Add(cart);
+        }
+
+        var cartItem = cart.Items.FirstOrDefault(i => i.ProductId == id);
+        if (cartItem == null)
+        {
+            cartItem = new CartItem { ProductId = id, Quantity = 1, Price = product.Price };
+            cart.Items.Add(cartItem);
         }
         else
         {
-            cart[id] = 1;
+            cartItem.Quantity++;
         }
 
-        HttpContext.Session.SetString("Cart", JsonSerializer.Serialize(cart));
+        await _context.SaveChangesAsync();
 
-        return Json(new { success = true, cartCount = cart.Values.Sum() });
+        TempData["Message"] = "Prodotto aggiunto al carrello con successo";
+        return RedirectToAction("Index", "Products");
     }
 
     [HttpPost]

@@ -77,111 +77,93 @@ namespace ProgettoBackendU2W3.Controllers
         }
 
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditProduct(Product model, int[] selectedIngredientIds, IFormFile newPhoto)
+        [HttpGet]
+        public async Task<IActionResult> EditProduct(int id)
         {
-            if (ModelState.IsValid)
-            {
-                var product = _context.Products
-                    .Include(p => p.ProductIngredients)
-                    .FirstOrDefault(p => p.Id == model.Id);
+            var product = await _context.Products
+                .Include(p => p.ProductIngredients)
+                .ThenInclude(pi => pi.Ingredient)
+                .FirstOrDefaultAsync(p => p.Id == id);
 
-                if (product == null)
-                {
-                    return NotFound();
-                }
-
-                string uniqueFileName = product.PhotoUrl;
-                if (newPhoto != null)
-                {
-                    if (!string.IsNullOrEmpty(product.PhotoUrl))
-                    {
-                        string oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", product.PhotoUrl.TrimStart('/'));
-                        if (System.IO.File.Exists(oldFilePath))
-                        {
-                            System.IO.File.Delete(oldFilePath);
-                        }
-                    }
-
-                    string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
-                    uniqueFileName = Guid.NewGuid().ToString() + "_" + newPhoto.FileName;
-                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await newPhoto.CopyToAsync(fileStream);
-                    }
-                }
-
-                product.Name = model.Name;
-                product.Price = model.Price;
-                product.DeliveryTime = model.DeliveryTime;
-                product.PhotoUrl = uniqueFileName != null ? "/images/" + uniqueFileName : null;
-
-                product.ProductIngredients.Clear();
-                foreach (var ingredientId in selectedIngredientIds)
-                {
-                    product.ProductIngredients.Add(new ProductIngredient { ProductId = product.Id, IngredientId = ingredientId });
-                }
-
-                _context.Update(product);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-
-            ViewData["Ingredients"] = new MultiSelectList(_context.Ingredients, "Id", "Name", selectedIngredientIds);
-            return View(model);
-        }
-
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditProduct(Product model, int[] selectedIngredientIds)
-        {
-            if (ModelState.IsValid)
-            {
-                var product = _context.Products
-                    .Include(p => p.ProductIngredients)
-                    .FirstOrDefault(p => p.Id == model.Id);
-
-                if (product == null)
-                {
-                    return NotFound();
-                }
-
-                product.Name = model.Name;
-                product.Price = model.Price;
-                product.DeliveryTime = model.DeliveryTime;
-                product.PhotoUrl = model.PhotoUrl;
-
-                product.ProductIngredients.Clear();
-                foreach (var ingredientId in selectedIngredientIds)
-                {
-                    product.ProductIngredients.Add(new ProductIngredient { ProductId = product.Id, IngredientId = ingredientId });
-                }
-
-                _context.Update(product);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-
-            ViewData["Ingredients"] = new MultiSelectList(_context.Ingredients, "Id", "Name", selectedIngredientIds);
-            return View(model);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteProduct(int id)
-        {
-            var product = await _context.Products.FindAsync(id);
             if (product == null)
             {
                 return NotFound();
             }
 
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            ViewData["Ingredients"] = new MultiSelectList(_context.Ingredients, "Id", "Name", product.ProductIngredients.Select(pi => pi.IngredientId));
+            return View(product);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditProduct(int id, Product model, int[] selectedIngredientIds, IFormFile newPhoto)
+        {
+            if (id != model.Id)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var product = await _context.Products
+                        .Include(p => p.ProductIngredients)
+                        .FirstOrDefaultAsync(p => p.Id == id);
+
+                    if (product == null)
+                    {
+                        return NotFound();
+                    }
+
+                    // Gestione della nuova foto
+                    if (newPhoto != null)
+                    {
+                        string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
+                        string uniqueFileName = Guid.NewGuid().ToString() + "_" + newPhoto.FileName;
+                        string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                        using (var fileStream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await newPhoto.CopyToAsync(fileStream);
+                        }
+                        product.PhotoUrl = "/images/" + uniqueFileName;
+                    }
+
+                    // Aggiorna le altre proprietà
+                    product.Name = model.Name;
+                    product.Price = model.Price;
+                    product.DeliveryTime = model.DeliveryTime;
+
+                    // Aggiorna gli ingredienti
+                    product.ProductIngredients.Clear();
+                    foreach (var ingredientId in selectedIngredientIds)
+                    {
+                        product.ProductIngredients.Add(new ProductIngredient { ProductId = product.Id, IngredientId = ingredientId });
+                    }
+
+                    _context.Update(product);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!ProductExists(model.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(Index));
+            }
+            ViewData["Ingredients"] = new MultiSelectList(_context.Ingredients, "Id", "Name", selectedIngredientIds);
+            return View(model);
+        }
+
+        private bool ProductExists(int id)
+        {
+            return _context.Products.Any(e => e.Id == id);
         }
 
         [HttpGet]

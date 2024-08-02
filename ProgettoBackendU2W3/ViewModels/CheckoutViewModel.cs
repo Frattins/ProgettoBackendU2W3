@@ -4,7 +4,7 @@ namespace ProgettoBackendU2W3.ViewModels
 {
     public class CheckoutViewModel
     {
-        public List<CheckoutItemViewModel> Items { get; set; }
+        public List<CartItem> CartItems { get; set; }
         public decimal TotalPrice { get; set; }
         public string ShippingAddress { get; set; }
         public string Notes { get; set; }

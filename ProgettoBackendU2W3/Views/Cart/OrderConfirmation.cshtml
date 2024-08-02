@@ -1,7 +1,20 @@
-﻿@{
-    ViewData["Title"] = "Conferma Ordine";
+﻿@model Order
+
+<h2>Ordine Confermato</h2>
+
+<p>Grazie per il tuo ordine! Il numero del tuo ordine è: @Model.Id</p>
+
+<h3>Dettagli dell'ordine:</h3>
+<p>Data: @Model.OrderDate</p>
+<p>Indirizzo di spedizione: @Model.ShippingAddress</p>
+<p>Note: @Model.Notes</p>
+
+<h4>Prodotti ordinati:</h4>
+@foreach (var item in Model.OrderItems)
+{
+    <p>@item.Product.Name - Quantità: @item.Quantity - Prezzo: @((item.Quantity * item.Price).ToString("C"))</p>
 }
 
-<h2>Conferma Ordine</h2>
+<p><strong>Totale: @Model.TotalCost.ToString("C")</strong></p>
 
-<p>Il tuo ordine è stato confermato e sarà presto processato. Grazie per aver ordinato da noi!</p>
+<a asp-controller="Products" asp-action="Index" class="btn btn-primary">Torna al negozio</a>
