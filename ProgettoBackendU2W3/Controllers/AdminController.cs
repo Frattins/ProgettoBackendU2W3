@@ -42,7 +42,7 @@ namespace ProgettoBackendU2W3.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateProduct(Product model, int[] selectedIngredientIds)
+        public async Task<IActionResult> CreateProduct(CreateProductViewModel model)
         {
             if (ModelState.IsValid)
             {
@@ -52,7 +52,7 @@ namespace ProgettoBackendU2W3.Controllers
                     Price = model.Price,
                     DeliveryTime = model.DeliveryTime,
                     PhotoUrl = model.PhotoUrl,
-                    ProductIngredients = selectedIngredientIds.Select(id => new ProductIngredient { IngredientId = id }).ToList()
+                    ProductIngredients = model.SelectedIngredientIds.Select(id => new ProductIngredient { IngredientId = id }).ToList()
                 };
 
                 _context.Add(product);
@@ -60,7 +60,7 @@ namespace ProgettoBackendU2W3.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            ViewData["Ingredients"] = new MultiSelectList(_context.Ingredients, "Id", "Name", selectedIngredientIds);
+            ViewData["Ingredients"] = new MultiSelectList(_context.Ingredients, "Id", "Name", model.SelectedIngredientIds);
             return View(model);
         }
 
@@ -140,40 +140,44 @@ namespace ProgettoBackendU2W3.Controllers
                 .ToList();
             return View(orders);
         }
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkOrderAsCompleted(int id)
         {
-            var order = await _context.Orders.FindAsync(id);
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
             if (order == null)
             {
                 return NotFound();
             }
 
             order.IsCompleted = true;
+            order.TotalCost = order.TotalPrice; 
+
             _context.Update(order);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(ManageOrders));
         }
 
         [HttpGet]
-        public IActionResult DailyStatistics()
-        {
-            return View();
-        }
-
-        [HttpPost]
-        public IActionResult GetDailyStatistics(DateTime date)
+        public IActionResult DailyStats()
         {
             var completedOrders = _context.Orders
-                .Where(o => o.OrderDate.Date == date.Date && o.IsCompleted)
+                .Where(o => o.IsCompleted)
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
                 .ToList();
 
-            var totalOrders = completedOrders.Count;
-            var totalRevenue = completedOrders.Sum(o => o.TotalPrice);
+            var viewModel = new DailyStatsViewModel
+            {
+                TotalOrders = completedOrders.Count,
+                TotalRevenue = completedOrders.Sum(o => o.TotalCost)
+            };
 
-            return Json(new { totalOrders, totalRevenue });
+            return View(viewModel);
         }
     }
 }

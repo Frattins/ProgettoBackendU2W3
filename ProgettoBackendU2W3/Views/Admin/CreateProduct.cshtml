@@ -1,11 +1,8 @@
-﻿@model ProgettoBackendU2W3.Models.Product
-
+﻿@model ProgettoBackendU2W3.ViewModels.CreateProductViewModel
 @{
     ViewData["Title"] = "Crea Prodotto";
 }
-
 <h1>Crea Prodotto</h1>
-
 <h4>Product</h4>
 <hr />
 <form asp-action="CreateProduct">
@@ -31,7 +28,7 @@
     </div>
     <div class="form-group">
         <label class="control-label">Ingredienti</label>
-        <select asp-for="ProductIngredients" class="form-control" multiple asp-items="ViewBag.Ingredients"></select>
+        <select asp-for="SelectedIngredientIds" class="form-control" multiple asp-items="ViewBag.Ingredients"></select>
     </div>
     <div class="form-group">
         <button type="submit" class="btn btn-primary">Salva</button>

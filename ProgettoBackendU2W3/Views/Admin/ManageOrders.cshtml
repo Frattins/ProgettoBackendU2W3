@@ -29,7 +29,7 @@
                 <td>
                     @if (!order.IsCompleted)
                     {
-                        <form asp-action="MarkAsCompleted" method="post">
+                        <form asp-action="MarkOrderAsCompleted" method="post">
                             <input type="hidden" name="id" value="@order.Id" />
                             <button type="submit" class="btn btn-success">Segna come Evaso</button>
                         </form>
